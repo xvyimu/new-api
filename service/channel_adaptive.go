@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var adaptiveLogSample = 0.01 // shadow-mode log sample rate
+var adaptiveLogSample = 0.05 // shadow-mode log sample rate (Info-level)
 
 // 请求上下文 key
 type adaptiveContextKey string
@@ -271,8 +271,9 @@ func logAdaptiveCompare(c *gin.Context, modelName, group string, selected *Candi
 	if oldCh != nil {
 		oldID = oldCh.Id
 	}
-	logger.LogDebug(c, "[shadow] model=%s group=%s adaptive=#%d(%.3f) orig=#%d",
-		modelName, group, selected.Channel.Id, selected.Score, oldID)
+	// Info so production shadow observation is visible without DEBUG=true.
+	logger.LogInfo(c, fmt.Sprintf("[shadow] model=%s group=%s adaptive=#%d(%.3f) orig=#%d",
+		modelName, group, selected.Channel.Id, selected.Score, oldID))
 }
 
 // RecordAdaptiveResult 请求完成后回调：更新指标 + 熔断状态
