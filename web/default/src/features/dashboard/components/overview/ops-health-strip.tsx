@@ -86,9 +86,19 @@ export function OpsHealthStrip() {
   const openCircuits =
     health?.circuits?.filter((c) => c.state === 'open').length ?? 0
   const topErr = health?.top_error_channels?.[0]
+  const shadowSamples = health?.shadow?.samples ?? 0
   const shadowRate = health?.shadow?.agree_rate
   const relayFail = health?.relay_fail ?? 0
   const relayOk = health?.relay_success ?? 0
+  const healthLoaded = healthQuery.isSuccess
+  // In-process counters reset on process restart/deploy; zero samples after a
+  // release is expected cold-start, not "perfect health".
+  const isColdStart =
+    healthLoaded &&
+    shadowSamples === 0 &&
+    relayOk === 0 &&
+    relayFail === 0 &&
+    openCircuits === 0
 
   return (
     <section
@@ -96,12 +106,28 @@ export function OpsHealthStrip() {
       aria-label={t('Ops health')}
     >
       <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
-        <div className='flex items-center gap-2'>
-          <Activity className='text-primary size-4' aria-hidden />
+        <div className='flex min-w-0 flex-wrap items-center gap-2'>
+          <Activity className='text-primary size-4 shrink-0' aria-hidden />
           <h2 className='text-sm font-semibold'>{t('Ops health')}</h2>
           <span className='text-muted-foreground text-xs'>
             {t('Local gateway')}
           </span>
+          <span
+            className='bg-primary/10 text-primary border-primary/20 rounded-md border px-1.5 py-0.5 text-[11px] font-medium tracking-wide'
+            title={t('Shadow mode stays on until a written gate approval')}
+          >
+            {t('Shadow: on')}
+          </span>
+          {isColdStart ? (
+            <span
+              className='text-muted-foreground border-border rounded-md border border-dashed px-1.5 py-0.5 text-[11px]'
+              title={t(
+                'Metrics accumulate since process start; zeros after deploy are expected'
+              )}
+            >
+              {t('Cold start')}
+            </span>
+          ) : null}
         </div>
         <div className='text-muted-foreground flex flex-wrap items-center gap-3 text-xs'>
           {typeof retryTimes === 'number' && (
@@ -119,9 +145,16 @@ export function OpsHealthStrip() {
               {t('Open circuits')}: {openCircuits}
             </span>
           )}
-          {typeof shadowRate === 'number' && health?.shadow?.samples ? (
-            <span>
-              {t('Shadow agree')}: {(shadowRate * 100).toFixed(0)}%
+          {healthLoaded ? (
+            <span className='text-foreground/80'>
+              {t('Shadow agree')}:{' '}
+              {shadowSamples > 0 && typeof shadowRate === 'number'
+                ? `${(shadowRate * 100).toFixed(0)}%`
+                : '—'}
+              <span className='text-muted-foreground'>
+                {' '}
+                (n={shadowSamples})
+              </span>
             </span>
           ) : null}
           {topErr ? (
@@ -137,6 +170,13 @@ export function OpsHealthStrip() {
           )}
         </div>
       </div>
+      {isColdStart ? (
+        <p className='text-muted-foreground mb-3 text-xs leading-relaxed'>
+          {t(
+            'Metrics accumulate since process start; zeros after deploy are expected'
+          )}
+        </p>
+      ) : null}
 
       <div className='grid gap-2 sm:grid-cols-3'>
         <Button
