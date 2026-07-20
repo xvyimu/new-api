@@ -43,6 +43,7 @@ var channelPermissionRoutes = []permissionRoute{
 	{method: http.MethodGet, path: "/models_enabled", permission: authz.ChannelRead, handler: controller.EnabledListModels},
 	{method: http.MethodGet, path: "/ops", permission: authz.ChannelRead, handler: controller.GetChannelOps},
 	{method: http.MethodGet, path: "/health-metrics", permission: authz.ChannelOperate, handler: controller.GetChannelHealthMetrics},
+	{method: http.MethodGet, path: "/refund-intents", permission: authz.ChannelOperate, handler: controller.ListRefundIntents},
 	// Static paths must be registered before /:id so Gin does not capture them as ids.
 	{method: http.MethodGet, path: "/duplicates", permission: authz.ChannelRead, handler: controller.ListDuplicateChannels},
 	{method: http.MethodPost, path: "/merge/preview", permission: authz.ChannelSensitiveWrite, handler: controller.PreviewChannelMerge},

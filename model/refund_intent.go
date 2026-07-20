@@ -147,3 +147,25 @@ func CountRefundIntentsByStatus() (map[string]int64, error) {
 	}
 	return out, nil
 }
+
+// ListRefundIntents returns recent intents for admin reconciliation (no token keys).
+func ListRefundIntents(status string, limit int) ([]*RefundIntent, error) {
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	q := DB.Model(&RefundIntent{}).Order("id DESC").Limit(limit)
+	if status != "" {
+		q = q.Where("status = ?", status)
+	}
+	var rows []*RefundIntent
+	if err := q.Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	// Never return stored token keys in list API payloads.
+	for _, r := range rows {
+		if r != nil {
+			r.TokenKey = ""
+		}
+	}
+	return rows, nil
+}
