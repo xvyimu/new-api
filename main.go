@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -260,8 +261,14 @@ func main() {
 	if port == "" {
 		port = strconv.Itoa(*common.Port)
 	}
+	// HOST optional: empty/"0.0.0.0"/"::" → all interfaces; "127.0.0.1" → loopback only.
+	host := strings.TrimSpace(os.Getenv("HOST"))
+	addr := ":" + port
+	if host != "" && host != "0.0.0.0" && host != "::" {
+		addr = net.JoinHostPort(host, port)
+	}
 
-	srv := newHTTPServer(":"+port, server)
+	srv := newHTTPServer(addr, server)
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -271,7 +278,7 @@ func main() {
 
 	time.Sleep(100 * time.Millisecond)
 
-	common.LogStartupSuccess(startTime, port)
+	common.LogStartupSuccess(startTime, addr)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,9 +37,19 @@ func FatalLog(v ...any) {
 	os.Exit(1)
 }
 
-func LogStartupSuccess(startTime time.Time, port string) {
+func LogStartupSuccess(startTime time.Time, listenAddr string) {
 	duration := time.Since(startTime)
 	durationMs := duration.Milliseconds()
+
+	// Accept either "port", ":port", or "host:port".
+	host, port := "", listenAddr
+	if i := strings.LastIndex(listenAddr, ":"); i >= 0 {
+		host = listenAddr[:i]
+		port = listenAddr[i+1:]
+	}
+	// Strip IPv6 brackets if present from JoinHostPort
+	host = strings.Trim(host, "[]")
+	loopbackOnly := host == "127.0.0.1" || host == "localhost" || host == "::1"
 
 	// Get network IPs
 	networkIps := GetNetworkIps()
@@ -61,8 +72,12 @@ func LogStartupSuccess(startTime time.Time, port string) {
 		fmt.Fprintf(gin.DefaultWriter, "  ➜  \033[1mLocal:\033[0m   http://localhost:%s/\n", port)
 	}
 
-	for _, ip := range networkIps {
-		fmt.Fprintf(gin.DefaultWriter, "  ➜  \033[1mNetwork:\033[0m http://%s:%s/\n", ip, port)
+	if !loopbackOnly {
+		for _, ip := range networkIps {
+			fmt.Fprintf(gin.DefaultWriter, "  ➜  \033[1mNetwork:\033[0m http://%s:%s/\n", ip, port)
+		}
+	} else {
+		fmt.Fprintf(gin.DefaultWriter, "  ➜  \033[1mBind:\033[0m    %s (loopback only)\n", listenAddr)
 	}
 
 	fmt.Fprintf(gin.DefaultWriter, "\n")
