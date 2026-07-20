@@ -1,5 +1,8 @@
 {
   "translation": {
+    "Inactive ({{count}})": "非活跃 ({{count}})",
+    "Active ({{count}})": "活跃 ({{count}})",
+    "{{count}} channels": "{{count}} 个渠道",
     "360": "360",
     "1000": "1000",
     "10000": "10000",

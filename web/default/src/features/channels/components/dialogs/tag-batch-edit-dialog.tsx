@@ -20,6 +20,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getGroups } from '@/lib/groups'
 import { toast } from 'sonner'
 
 import { Dialog } from '@/components/dialog'
@@ -35,7 +36,6 @@ import {
   getTagModels,
   editTagChannels,
   getAllModels,
-  getGroups,
 } from '../../api'
 import { channelsQueryKeys } from '../../lib'
 import type { TagOperationParams } from '../../types'

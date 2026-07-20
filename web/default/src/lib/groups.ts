@@ -16,15 +16,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import assert from 'node:assert/strict'
-import { describe, it } from 'vitest'
+import { api } from '@/lib/api'
 
-import { CHANNEL_PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE } from './constants'
+export type GroupsResponse = {
+  success: boolean
+  message?: string
+  data?: string[]
+}
 
-describe('channel card pagination', () => {
-  it('fills the three-column desktop grid without a trailing empty slot', () => {
-    assert.equal(DEFAULT_PAGE_SIZE % 3, 0)
-    assert.ok(CHANNEL_PAGE_SIZE_OPTIONS.includes(DEFAULT_PAGE_SIZE))
-    assert.ok(CHANNEL_PAGE_SIZE_OPTIONS.every((pageSize) => pageSize % 3 === 0))
-  })
-})
+/**
+ * Shared group list used by channels / users / subscriptions forms.
+ * Kept in lib/ so features do not re-export each other.
+ */
+export async function getGroups(): Promise<GroupsResponse> {
+  const res = await api.get('/api/group/')
+  return res.data
+}

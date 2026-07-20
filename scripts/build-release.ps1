@@ -59,6 +59,9 @@ $isExistingBinary = -not [string]::IsNullOrWhiteSpace($ExistingBinary)
 
 if (-not $isExistingBinary) {
 
+  if ($SkipTests) {
+    Write-Warning "SkipTests is set: go vet/test gate skipped. Do not use for production release."
+  }
   if (-not $SkipTests) {
     Push-Location $repoRoot
     try {
@@ -67,6 +70,19 @@ if (-not $isExistingBinary) {
       # Focus on packages that gate release correctness; full ./... can be enabled later.
       & go test -count=1 -timeout 180s ./controller/... ./model/... ./service/... ./router/...
       Assert-ExitCode "go test (controller/model/service/router)"
+    } finally {
+      Pop-Location
+    }
+  }
+  if (-not $SkipTests) {
+    Push-Location (Join-Path $repoRoot "web\default")
+    try {
+      if (Test-Path -LiteralPath "package.json") {
+        & bun run test
+        if ($LASTEXITCODE -ne 0) {
+          Write-Warning "frontend vitest failed with exit $LASTEXITCODE (non-blocking until suite stabilizes)"
+        }
+      }
     } finally {
       Pop-Location
     }

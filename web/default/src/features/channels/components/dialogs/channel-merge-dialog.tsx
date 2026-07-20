@@ -22,6 +22,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import {
+  ADMIN_PERMISSION_ACTIONS,
+  ADMIN_PERMISSION_RESOURCES,
+  hasPermission,
+} from '@/lib/admin-permissions'
+import { useAuthStore } from '@/stores/auth-store'
+
 import { Dialog } from '@/components/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -57,6 +64,12 @@ export function ChannelMergeDialog({
 }: ChannelMergeDialogProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const currentUser = useAuthStore((s) => s.auth.user)
+  const canEditSensitive = hasPermission(
+    currentUser,
+    ADMIN_PERMISSION_RESOURCES.CHANNEL,
+    ADMIN_PERMISSION_ACTIONS.SENSITIVE_WRITE
+  )
 
   const [loading, setLoading] = useState(false)
   const [merging, setMerging] = useState(false)
@@ -67,6 +80,13 @@ export function ChannelMergeDialog({
   const [error, setError] = useState<string>('')
 
   const isSelectionMode = (selectedIds?.length ?? 0) >= 2
+
+  useEffect(() => {
+    if (!open) return
+    if (canEditSensitive) return
+    toast.error(t('No permission to perform this action'))
+    onOpenChange(false)
+  }, [open, canEditSensitive, onOpenChange, t])
 
   const activeIds = useMemo(() => {
     if (isSelectionMode) {

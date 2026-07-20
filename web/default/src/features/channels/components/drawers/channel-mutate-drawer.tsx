@@ -53,6 +53,7 @@ import {
 } from 'react'
 import { type SubmitErrorHandler, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
+import { getGroups } from '@/lib/groups'
 import { toast } from 'sonner'
 
 import {
@@ -131,7 +132,6 @@ import {
   getAllModels,
   getChannel,
   getChannelKey,
-  getGroups,
   getPrefillGroups,
   refreshCodexCredential,
 } from '../../api'

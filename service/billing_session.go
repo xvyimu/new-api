@@ -105,9 +105,14 @@ func (s *BillingSession) Refund(c *gin.Context) {
 	funding := s.funding
 
 	gopool.Go(func() {
+		defer func() {
+			if r := recover(); r != nil {
+				common.SysLog(fmt.Sprintf("panic refunding billing session token_id=%d: %v", tokenId, r))
+			}
+		}()
 		// 1) 退还资金来源
 		if err := funding.Refund(); err != nil {
-			common.SysLog("error refunding billing source: " + err.Error())
+			common.SysLog(fmt.Sprintf("error refunding billing source token_id=%d: %s", tokenId, err.Error()))
 		}
 		if extraReserved > 0 && funding.Source() == BillingSourceSubscription && subscriptionId > 0 {
 			if err := model.PostConsumeUserSubscriptionDelta(subscriptionId, -int64(extraReserved)); err != nil {
@@ -117,7 +122,7 @@ func (s *BillingSession) Refund(c *gin.Context) {
 		// 2) 退还令牌额度
 		if tokenConsumed > 0 && !isPlayground {
 			if err := model.IncreaseTokenQuota(tokenId, tokenKey, tokenConsumed); err != nil {
-				common.SysLog("error refunding token quota: " + err.Error())
+				common.SysLog(fmt.Sprintf("error refunding token quota token_id=%d: %s", tokenId, err.Error()))
 			}
 		}
 	})

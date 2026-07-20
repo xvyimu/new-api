@@ -32,5 +32,6 @@ var AdaptiveBalanceShadowMode bool
 var ChannelCircuitBreakerEnabled bool
 var MaxRetryChannels int
 var ChannelCooldownSeconds int
+var ChannelCircuitBreakerThreshold int
 var EwmaAlpha float64
 var MaxChannelConcurrency int

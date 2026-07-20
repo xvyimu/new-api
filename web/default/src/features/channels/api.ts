@@ -16,7 +16,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { getGroups as getUserGroups } from '@/features/users/api'
 import { api, type ApiRequestConfig } from '@/lib/api'
 
 import type {
@@ -44,12 +43,14 @@ import type {
   TagOperationParams,
 } from './types'
 
+// Business failures are handled by callers (success flag + toast).
+// HTTP errors still go through the global error handler unless a call site
+// explicitly sets skipErrorHandler.
 const channelActionConfig = (
   config: ApiRequestConfig = {}
 ): ApiRequestConfig => ({
-  ...config,
   skipBusinessError: true,
-  skipErrorHandler: true,
+  ...config,
 })
 
 export type CodexUsageResponse = {
@@ -670,15 +671,6 @@ export async function getOllamaVersion(
   const res = await api.get(`/api/channel/ollama/version/${channelId}`)
   return res.data
 }
-
-// ============================================================================
-// Group Management
-// ============================================================================
-
-/**
- * Get all available groups (re-exported from users API for convenience)
- */
-export const getGroups = getUserGroups
 
 // ============================================================================
 // Prefill Groups (Model Groups)

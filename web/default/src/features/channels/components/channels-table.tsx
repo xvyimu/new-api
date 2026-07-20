@@ -48,7 +48,8 @@ import { useTableUrlState } from '@/hooks/use-table-url-state'
 import { cn } from '@/lib/utils'
 import { getLobeIcon } from '@/lib/lobe-icon'
 
-import { getChannels, searchChannels, getGroups } from '../api'
+import { getGroups } from '@/lib/groups'
+import { getChannels, searchChannels } from '../api'
 import {
   DEFAULT_PAGE_SIZE,
   CHANNEL_PAGE_SIZE_OPTIONS,

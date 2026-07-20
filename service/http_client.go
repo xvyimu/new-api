@@ -140,6 +140,7 @@ func NewProxyHttpClient(proxyURL string) (*http.Client, error) {
 		return http.DefaultClient, nil
 	}
 
+	// Fast path under lock.
 	proxyClientLock.Lock()
 	if client, ok := proxyClients[proxyURL]; ok {
 		proxyClientLock.Unlock()
@@ -152,17 +153,12 @@ func NewProxyHttpClient(proxyURL string) (*http.Client, error) {
 		return nil, err
 	}
 
+	var client *http.Client
 	switch parsedURL.Scheme {
 	case "http", "https":
 		transport := common.NewOutboundHTTPTransport(http.ProxyURL(parsedURL), nil)
-		client := newOutboundHTTPClient(transport, checkRedirect)
-		proxyClientLock.Lock()
-		proxyClients[proxyURL] = client
-		proxyClientLock.Unlock()
-		return client, nil
-
+		client = newOutboundHTTPClient(transport, checkRedirect)
 	case "socks5", "socks5h":
-		// 获取认证信息
 		var auth *proxy.Auth
 		if parsedURL.User != nil {
 			auth = &proxy.Auth{
@@ -173,14 +169,11 @@ func NewProxyHttpClient(proxyURL string) (*http.Client, error) {
 				auth.Password = password
 			}
 		}
-
-		// 创建 SOCKS5 代理拨号器
-		// proxy.SOCKS5 使用 tcp 参数，所有 TCP 连接包括 DNS 查询都将通过代理进行。行为与 socks5h 相同
+		// proxy.SOCKS5 使用 tcp，DNS 也走代理（等同 socks5h）
 		dialer, err := proxy.SOCKS5("tcp", parsedURL.Host, auth, proxy.Direct)
 		if err != nil {
 			return nil, err
 		}
-
 		dialContext := func(ctx context.Context, network, addr string) (net.Conn, error) {
 			if contextDialer, ok := dialer.(proxy.ContextDialer); ok {
 				return contextDialer.DialContext(ctx, network, addr)
@@ -188,13 +181,21 @@ func NewProxyHttpClient(proxyURL string) (*http.Client, error) {
 			return dialer.Dial(network, addr)
 		}
 		transport := common.NewOutboundHTTPTransport(nil, dialContext)
-		client := newOutboundHTTPClient(transport, checkRedirect)
-		proxyClientLock.Lock()
-		proxyClients[proxyURL] = client
-		proxyClientLock.Unlock()
-		return client, nil
-
+		client = newOutboundHTTPClient(transport, checkRedirect)
 	default:
 		return nil, fmt.Errorf("unsupported proxy scheme: %s, must be http, https, socks5 or socks5h", parsedURL.Scheme)
 	}
+
+	// Store with double-check so concurrent first hits share one client.
+	proxyClientLock.Lock()
+	if existing, ok := proxyClients[proxyURL]; ok {
+		proxyClientLock.Unlock()
+		if transport, ok := client.Transport.(*http.Transport); ok && transport != nil {
+			transport.CloseIdleConnections()
+		}
+		return existing, nil
+	}
+	proxyClients[proxyURL] = client
+	proxyClientLock.Unlock()
+	return client, nil
 }

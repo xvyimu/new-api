@@ -32,7 +32,11 @@ import {
   getChannelOps,
   getDuplicateChannels,
 } from '@/features/channels/api'
-import { ROLE } from '@/lib/roles'
+import {
+  ADMIN_PERMISSION_ACTIONS,
+  ADMIN_PERMISSION_RESOURCES,
+  hasPermission,
+} from '@/lib/admin-permissions'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 
@@ -42,13 +46,17 @@ import { useAuthStore } from '@/stores/auth-store'
  */
 export function OpsHealthStrip() {
   const { t } = useTranslation()
-  const role = useAuthStore((s) => s.auth.user?.role ?? 0)
-  const isAdmin = role >= ROLE.ADMIN
+  const currentUser = useAuthStore((s) => s.auth.user)
+  const canViewOps = hasPermission(
+    currentUser,
+    ADMIN_PERMISSION_RESOURCES.CHANNEL,
+    ADMIN_PERMISSION_ACTIONS.OPERATE
+  )
 
   const opsQuery = useQuery({
     queryKey: ['channel-ops', 'overview-strip'],
     queryFn: getChannelOps,
-    enabled: isAdmin,
+    enabled: canViewOps,
     staleTime: 60_000,
     retry: false,
   })
@@ -56,12 +64,12 @@ export function OpsHealthStrip() {
   const dupQuery = useQuery({
     queryKey: ['channel-duplicates', 'overview-strip'],
     queryFn: getDuplicateChannels,
-    enabled: isAdmin,
+    enabled: canViewOps,
     staleTime: 60_000,
     retry: false,
   })
 
-  if (!isAdmin) return null
+  if (!canViewOps) return null
 
   const retryTimes = opsQuery.data?.data?.retry_times
   const dupCount = dupQuery.data?.data?.groups?.length ?? 0

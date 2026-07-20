@@ -72,7 +72,6 @@ func IsCircuitOpen(channelID int) bool {
 	return true
 }
 
-
 // RecordSuccess 成功调用 -> 重置熔断状态
 func RecordCircuitSuccess(channelID int) {
 	if !constant.ChannelCircuitBreakerEnabled {
@@ -172,7 +171,10 @@ func RecordCircuitFailureWithPermit(permit CircuitPermit, errMsg string) {
 	cb.LastError = errMsg
 
 	// closed 状态下连续失败达到阈值 -> open
-	threshold := 3
+	threshold := constant.ChannelCircuitBreakerThreshold
+	if threshold <= 0 {
+		threshold = 3
+	}
 	if cb.ConsecutiveFailure >= threshold {
 		cb.State = CircuitOpen
 		cb.Generation++
@@ -234,7 +236,6 @@ func ReleaseCircuitPermit(permit CircuitPermit) {
 		cb.HalfOpenSince = time.Time{}
 	}
 }
-
 
 // GetCircuitState 读取熔断状态（供日志/观测使用）
 func GetCircuitState(channelID int) (CircuitState, int, string) {
