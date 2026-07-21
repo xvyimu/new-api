@@ -16,6 +16,7 @@ import (
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/pkg/observability"
 	perfmetrics "github.com/QuantumNous/new-api/pkg/perf_metrics"
 	"github.com/QuantumNous/new-api/relay"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
@@ -31,6 +32,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 func relayHandler(c *gin.Context, info *relaycommon.RelayInfo) *types.NewAPIError {
@@ -230,6 +233,22 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 		// Always dec even if helper panics (CustomRecovery still runs after).
 		func() {
 			defer service.DecChannelConcurrency(channel.Id)
+			// OTEL child span per retry attempt (noop when traces disabled).
+			attemptCtx, attemptSpan := observability.StartSpan(c.Request.Context(), observability.SpanNameRelayAttempt())
+			defer attemptSpan.End()
+			if channel != nil {
+				attemptSpan.SetAttributes(attribute.Int64("channel_id", int64(channel.Id)))
+			}
+			if relayInfo != nil {
+				if relayInfo.OriginModelName != "" {
+					attemptSpan.SetAttributes(attribute.String("model", relayInfo.OriginModelName))
+				}
+				attemptSpan.SetAttributes(attribute.Int("attempt", relayInfo.RetryIndex))
+				if relayInfo.RelayFormat != "" {
+					attemptSpan.SetAttributes(attribute.String("relay_format", string(relayInfo.RelayFormat)))
+				}
+			}
+			c.Request = c.Request.WithContext(attemptCtx)
 			switch relayFormat {
 			case types.RelayFormatOpenAIRealtime:
 				newAPIError = relay.WssHelper(c, relayInfo)
@@ -239,6 +258,14 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 				newAPIError = geminiRelayHandler(c, relayInfo)
 			default:
 				newAPIError = relayHandler(c, relayInfo)
+			}
+			if newAPIError != nil {
+				statusCode := newAPIError.StatusCode
+				if statusCode == 0 {
+					statusCode = http.StatusInternalServerError
+				}
+				attemptSpan.SetAttributes(attribute.Int("upstream_status", statusCode))
+				attemptSpan.SetStatus(codes.Error, "relay_attempt_error")
 			}
 		}()
 		{

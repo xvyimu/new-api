@@ -13,6 +13,7 @@ import (
 
 	common2 "github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/logger"
+	"github.com/QuantumNous/new-api/pkg/observability"
 	"github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/relay/constant"
 	"github.com/QuantumNous/new-api/relay/helper"
@@ -23,6 +24,8 @@ import (
 	"github.com/bytedance/gopkg/util/gopool"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 // applyUpstreamContentLength populates req.ContentLength when the upstream
@@ -478,12 +481,30 @@ func doRequest(c *gin.Context, req *http.Request, info *common.RelayInfo) (*http
 	if c == nil || c.Request == nil {
 		return nil, errors.New("request context is unavailable")
 	}
-	req = req.WithContext(c.Request.Context())
+
+	// OTEL child span for upstream HTTP (noop when traces disabled / not sampled).
+	spanCtx, span := observability.StartSpan(c.Request.Context(), observability.SpanNameRelayUpstream())
+	defer span.End()
+	if info != nil && info.ChannelMeta != nil {
+		span.SetAttributes(attribute.Int64("channel_id", int64(info.ChannelId)))
+	}
+	if req != nil {
+		span.SetAttributes(attribute.String("http.request.method", req.Method))
+		if req.URL != nil && req.URL.Host != "" {
+			span.SetAttributes(attribute.String("server.address", req.URL.Host))
+		}
+	}
+	req = req.WithContext(spanCtx)
+	// Keep gin request context in sync so nested work sees the span.
+	c.Request = c.Request.WithContext(spanCtx)
+
 	var client *http.Client
 	var err error
 	if info.ChannelSetting.Proxy != "" {
 		client, err = service.NewProxyHttpClient(info.ChannelSetting.Proxy)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "proxy_client_error")
 			return nil, fmt.Errorf("new proxy http client failed: %w", err)
 		}
 	} else {
@@ -513,10 +534,18 @@ func doRequest(c *gin.Context, req *http.Request, info *common.RelayInfo) (*http
 	resp, err := client.Do(req)
 	if err != nil {
 		logger.LogError(c, "do request failed: "+err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "upstream_do_failed")
 		return nil, types.NewError(err, types.ErrorCodeDoRequestFailed, types.ErrOptionWithHideErrMsg("upstream error: do request failed"))
 	}
 	if resp == nil {
+		span.SetStatus(codes.Error, "upstream_resp_nil")
 		return nil, errors.New("resp is nil")
+	}
+
+	span.SetAttributes(attribute.Int("upstream_status", resp.StatusCode))
+	if resp.StatusCode >= 500 {
+		span.SetStatus(codes.Error, "upstream_server_error")
 	}
 
 	if upID := resp.Header.Get(common2.RequestIdKey); upID != "" {

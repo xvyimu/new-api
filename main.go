@@ -199,6 +199,11 @@ func main() {
 		common.SysError(fmt.Sprintf("start pyroscope error : %v", err))
 	}
 
+	// OTEL traces (opt-in via OTEL_TRACES_ENABLED); fail-open on exporter errors.
+	if _, err := observability.InitTraces(context.Background()); err != nil {
+		common.SysError(fmt.Sprintf("otel traces init error (fail-open): %v", err))
+	}
+
 	if !mode.servesHTTP() {
 		common.SysLog(fmt.Sprintf("runtime ready: run_mode=%s", mode))
 		quit := make(chan os.Signal, 1)
@@ -211,6 +216,9 @@ func main() {
 		defer cancel()
 		if err := service.WaitForSystemTasks(ctx); err != nil {
 			common.SysError(fmt.Sprintf("system tasks did not stop before shutdown deadline: %v", err))
+		}
+		if err := observability.ShutdownTraces(ctx); err != nil {
+			common.SysError(fmt.Sprintf("otel traces shutdown: %v", err))
 		}
 		return
 	}
@@ -240,6 +248,10 @@ func main() {
 	server.Use(middleware.RequestId())
 	server.Use(middleware.Version())
 	server.Use(middleware.TraceContext())
+	// OTEL HTTP root span after TraceContext so request_id / axon ids are available.
+	if observability.EnabledTraces() {
+		server.Use(observability.HTTPTraceMiddleware())
+	}
 	// HSTS 等安全头：经 Tunnel/CF 的 HTTPS 回源会带 X-Forwarded-Proto。
 	server.Use(middleware.SecurityHeaders())
 	server.Use(middleware.I18n())
@@ -303,6 +315,9 @@ func main() {
 	}
 	if err := service.WaitForSystemTasks(ctx); err != nil {
 		common.SysError(fmt.Sprintf("system tasks did not stop before shutdown deadline: %v", err))
+	}
+	if err := observability.ShutdownTraces(ctx); err != nil {
+		common.SysError(fmt.Sprintf("otel traces shutdown: %v", err))
 	}
 	// 内存中的看板数据保存入库，避免重启丢失未落库数据 (issue #5679)
 	if common.DataExportEnabled {
