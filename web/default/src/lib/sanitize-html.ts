@@ -22,9 +22,9 @@ For commercial licensing, please contact support@quantumnous.com
  * Single path: DOMPurify — aligned with HtmlContent and classic sanitizeHtml.
  */
 
-import createDOMPurify, { type WindowLike } from 'dompurify'
+import createDOMPurify, { type Config, type WindowLike } from 'dompurify'
 
-const SANITIZE_OPTIONS = {
+const SANITIZE_OPTIONS: Config = {
   USE_PROFILES: { html: true },
   FORBID_TAGS: [
     'style',
@@ -38,7 +38,7 @@ const SANITIZE_OPTIONS = {
     'base',
   ],
   FORBID_ATTR: ['style', 'srcdoc', 'srcset'],
-} as const
+}
 
 type PurifyInstance = ReturnType<typeof createDOMPurify>
 
