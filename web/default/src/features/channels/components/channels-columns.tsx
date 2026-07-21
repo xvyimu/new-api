@@ -17,7 +17,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 /* eslint-disable react-refresh/only-export-components */
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
   AlertTriangle,
@@ -54,8 +55,14 @@ import {
 import { toIntlLocale } from '@/i18n/languages'
 import { formatTimestampToDate } from '@/lib/format'
 import { truncateText } from '@/lib/utils'
+import {
+  ADMIN_PERMISSION_ACTIONS,
+  ADMIN_PERMISSION_RESOURCES,
+  hasPermission,
+} from '@/lib/admin-permissions'
+import { useAuthStore } from '@/stores/auth-store'
 
-import { getCodexUsage } from '../api'
+import { getChannelHealthMetrics, getCodexUsage } from '../api'
 import { CHANNEL_STATUS_CONFIG, MODEL_FETCHABLE_TYPES } from '../constants'
 import {
   formatRelativeTime,
@@ -73,6 +80,10 @@ import {
   handleUpdateChannelBalance,
   isTagAggregateRow,
   type TagRow,
+  CHANNEL_HEALTH_METRICS_QUERY_KEY,
+  buildChannelFailureViewModel,
+  channelErrorLogsSearch,
+  channelHasFailureSignal,
 } from '../lib'
 import { parseUpstreamUpdateMeta } from '../lib/upstream-update-utils'
 import type { Channel } from '../types'
@@ -521,10 +532,27 @@ export function useChannelsColumns(
   const { sensitiveVisible } = useChannels()
   const enableSelection = options.enableSelection ?? true
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
+  const currentUser = useAuthStore((s) => s.auth.user)
+  const canViewOps = hasPermission(
+    currentUser,
+    ADMIN_PERMISSION_RESOURCES.CHANNEL,
+    ADMIN_PERMISSION_ACTIONS.OPERATE
+  )
+  // Share cache with ChannelFailureStrip (same query key).
+  const healthQuery = useQuery({
+    queryKey: CHANNEL_HEALTH_METRICS_QUERY_KEY,
+    queryFn: getChannelHealthMetrics,
+    enabled: canViewOps,
+    staleTime: 30_000,
+    retry: false,
+  })
+  const failureVm = useMemo(
+    () => buildChannelFailureViewModel(healthQuery.data?.data),
+    [healthQuery.data?.data]
+  )
   // The column definitions only depend on the translation function, the active
-  // locale, and sensitive-data visibility. Memoizing keeps the array (and every
-  // cell renderer reference) stable across unrelated re-renders, so react-table
-  // does not invalidate the whole row model on each parent render.
+  // locale, sensitive-data visibility, and failure signals. Memoizing keeps the
+  // array stable across unrelated re-renders.
   return useMemo<ColumnDef<Channel>[]>(
     () => [
       // Checkbox column
@@ -573,9 +601,34 @@ export function useChannelsColumns(
         meta: { mobileHidden: true },
         cell: ({ row }) => {
           const id = row.getValue('id') as number
-          return <TableId value={sensitiveVisible ? id : SENSITIVE_MASK} />
+          const isTagRow = isTagAggregateRow(row.original)
+          const errCount = failureVm.errorCountByChannel[id] ?? 0
+          const isOpen = failureVm.openCircuitChannelIds.includes(id)
+          const showFailure =
+            !isTagRow && channelHasFailureSignal(id, failureVm)
+          return (
+            <div className='flex flex-wrap items-center gap-1'>
+              <TableId value={sensitiveVisible ? id : SENSITIVE_MASK} />
+              {showFailure ? (
+                <Link
+                  to='/usage-logs/$section'
+                  params={{ section: 'common' }}
+                  search={channelErrorLogsSearch(id)}
+                  className='text-warning hover:bg-warning/10 inline-flex items-center gap-0.5 rounded border border-current/20 px-1 py-0.5 text-[10px] font-medium'
+                  title={t('Recent failures')}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <AlertTriangle className='size-3' aria-hidden />
+                  {errCount > 0 ? errCount : null}
+                  {isOpen ? (
+                    <span className='sr-only'>{t('Open circuits')}</span>
+                  ) : null}
+                </Link>
+              ) : null}
+            </div>
+          )
         },
-        size: 80,
+        size: 96,
       },
       // Name column
       {
@@ -1153,6 +1206,6 @@ export function useChannelsColumns(
         meta: { pinned: 'right' as const },
       },
     ],
-    [enableSelection, t, locale, sensitiveVisible]
+    [enableSelection, t, locale, sensitiveVisible, failureVm]
   )
 }

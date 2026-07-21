@@ -32,6 +32,7 @@ import { ROLE } from '@/lib/roles'
 import { useAuthStore } from '@/stores/auth-store'
 
 import { getChannelOps } from './api'
+import { ChannelFailureStrip } from './components/channel-failure-strip'
 import { ChannelsDialogs } from './components/channels-dialogs'
 import { ChannelsPrimaryButtons } from './components/channels-primary-buttons'
 import { ChannelsProvider } from './components/channels-provider'
@@ -97,6 +98,7 @@ export function Channels() {
           <ChannelsPrimaryButtons />
         </SectionPageLayout.Actions>
         <SectionPageLayout.Content>
+          <ChannelFailureStrip />
           <ChannelsTable />
         </SectionPageLayout.Content>
       </SectionPageLayout>
