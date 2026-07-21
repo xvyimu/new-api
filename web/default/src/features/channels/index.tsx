@@ -33,6 +33,7 @@ import { useAuthStore } from '@/stores/auth-store'
 
 import { getChannelOps } from './api'
 import { ChannelFailureStrip } from './components/channel-failure-strip'
+import { RefundIntentsCard } from './components/refund-intents-card'
 import { ChannelsDialogs } from './components/channels-dialogs'
 import { ChannelsPrimaryButtons } from './components/channels-primary-buttons'
 import { ChannelsProvider } from './components/channels-provider'
@@ -99,6 +100,7 @@ export function Channels() {
         </SectionPageLayout.Actions>
         <SectionPageLayout.Content>
           <ChannelFailureStrip />
+          <RefundIntentsCard />
           <ChannelsTable />
         </SectionPageLayout.Content>
       </SectionPageLayout>
