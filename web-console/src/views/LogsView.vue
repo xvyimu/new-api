@@ -186,7 +186,11 @@ function normalizeListBody(body: unknown): { items: LogItem[]; total: number } {
   return { items: list, total: tot }
 }
 
+/** Drop stale responses when filters/pages change rapidly. */
+let refreshSeq = 0
+
 async function refresh() {
+  const seq = ++refreshSeq
   loading.value = true
   error.value = null
   try {
@@ -197,8 +201,10 @@ async function refresh() {
       model_name: modelName.value,
       username: isAdmin.value ? username.value : undefined,
       request_id: requestId.value,
-      isAdmin: isAdmin.value,
+      // Explicit true only — listLogs defaults to self when false/undefined.
+      isAdmin: isAdmin.value === true,
     })
+    if (seq !== refreshSeq) return
     if (!isApiSuccess(body)) {
       error.value = body.message || 'list failed'
       items.value = []
@@ -209,11 +215,12 @@ async function refresh() {
     items.value = list
     total.value = tot
   } catch (e) {
+    if (seq !== refreshSeq) return
     error.value = apiMessage(e)
     items.value = []
     total.value = 0
   } finally {
-    loading.value = false
+    if (seq === refreshSeq) loading.value = false
   }
 }
 

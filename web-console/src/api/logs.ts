@@ -28,7 +28,8 @@ function buildParams(q: LogListQuery): Record<string, string | number> {
     page_size: q.page_size ?? 20,
   }
   if (q.type !== undefined && q.type !== '' && q.type !== 'all') {
-    params.type = typeof q.type === 'number' ? q.type : Number(q.type)
+    const n = typeof q.type === 'number' ? q.type : Number(q.type)
+    if (Number.isFinite(n)) params.type = n
   }
   if (q.model_name?.trim()) params.model_name = q.model_name.trim()
   if (q.username?.trim()) params.username = q.username.trim()
@@ -40,34 +41,58 @@ function buildParams(q: LogListQuery): Record<string, string | number> {
     params.upstream_request_id = q.upstream_request_id.trim()
   }
   if (q.trace_id?.trim()) params.trace_id = q.trace_id.trim()
-  if (q.start_timestamp) params.start_timestamp = q.start_timestamp
-  if (q.end_timestamp) params.end_timestamp = q.end_timestamp
+  // Allow 0 (epoch) — do not use truthiness
+  if (q.start_timestamp !== undefined && q.start_timestamp !== null) {
+    params.start_timestamp = q.start_timestamp
+  }
+  if (q.end_timestamp !== undefined && q.end_timestamp !== null) {
+    params.end_timestamp = q.end_timestamp
+  }
   return params
+}
+
+function httpStatus(err: unknown): number | undefined {
+  if (err && typeof err === 'object' && 'response' in err) {
+    return (err as { response?: { status?: number } }).response?.status
+  }
+  return undefined
 }
 
 /**
  * Read-only usage logs.
  * Admin: GET /api/log/  User: GET /api/log/self
- * On 403 from admin path, falls back to self.
+ *
+ * Fallback rules (TransitHub authHelper often returns HTTP 200 + success:false
+ * for insufficient role — not only 403):
+ * - isAdmin === false → self only
+ * - admin path non-success body / 401 / 403 → try self
+ * - other HTTP errors rethrow
  */
 export async function listLogs(q: LogListQuery = {}) {
   const params = buildParams(q)
-  const preferAdmin = q.isAdmin !== false
+  const preferAdmin = q.isAdmin === true
 
   if (preferAdmin) {
     try {
-      const res = await http.get<ApiResponse<LogListData>>('/api/log/', { params })
-      return res.data
+      const res = await http.get<ApiResponse<LogListData>>('/api/log/', {
+        params,
+        // Do not force global logout while probing admin list; self may still work.
+        skipAuthRedirect: true,
+      })
+      if (res.data?.success === true) {
+        return res.data
+      }
+      // HTTP 200 + success:false (e.g. insufficient privilege) → self
     } catch (err: unknown) {
-      const status =
-        err && typeof err === 'object' && 'response' in err
-          ? (err as { response?: { status?: number } }).response?.status
-          : undefined
+      const status = httpStatus(err)
       if (status !== 403 && status !== 401) throw err
       // fall through to self
     }
   }
 
-  const res = await http.get<ApiResponse<LogListData>>('/api/log/self', { params })
+  const res = await http.get<ApiResponse<LogListData>>('/api/log/self', {
+    params,
+    skipAuthRedirect: true,
+  })
   return res.data
 }
