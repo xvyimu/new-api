@@ -23,6 +23,19 @@ cd D:\TransitHub\src
 pwsh -File scripts/e2e-web-console-login.ps1
 ```
 
+## Logs live smoke (T-TH-003)
+
+API-layer smoke for `/api/log/` + `/api/log/self` (no Playwright):
+
+```powershell
+# Prefer access token + New-Api-User (do not commit secrets)
+$env:TH_ACCESS_TOKEN = '<users.access_token>'
+$env:TH_USER_ID = '1'
+pwsh -File scripts/smoke-logs.ps1
+```
+
+Report: `docs/ops/T-TH-003-logs-live-smoke.md`.
+
 ## Notes
 
 - Auth is **session cookie + `New-Api-User` header** (same as legacy React). Fresh DB: call `POST /api/setup` first (see script comments / isolated e2e).
