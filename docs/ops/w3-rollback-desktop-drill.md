@@ -53,14 +53,32 @@ Optional smoke (separated edge still up):
 pwsh -NoProfile -File deploy/separated/smoke.ps1 -FrontendBase http://127.0.0.1:8080
 ```
 
-## W3 execution status
+## W3 / W4 execution status
 
 | Item | Result |
 |------|--------|
-| Desktop drill **executed** on this agent host? | **No** |
-| Reason | `docker` not on PATH; no operator-owned staging compose; W3 bans production flip |
-| Artifact produced | This step table + pointer to runbook |
+| Desktop drill **executed** on this agent host? | **No** (W3 + W4) |
+| Reason | `docker` not on PATH; no operator-owned staging compose; D7 flip banned |
+| Artifact produced | This step table + pointer to runbook · W4 minimal cmd seq in [w4-d7-nonprod-verify.md](./w4-d7-nonprod-verify.md) |
 | Next | Operator runs Option A or B on **non-prod**; paste wall-clock + checklist into [w3-d7-gate-dossier.md](./w3-d7-gate-dossier.md) G7 |
+
+### Minimal command sequence (W4 · operator clipboard)
+
+```powershell
+# NON-PROD ONLY · Option A integrated (preferred)
+# 1) Note digests + FRONTEND_MODE
+# 2) Redeploy previous integrated image/binary
+# 3) FRONTEND_MODE unset or auto  (NOT disabled)
+# 4) Single public origin → integrated process
+# 5) Verify:
+#    Invoke-WebRequest http://127.0.0.1:3000/healthz -UseBasicParsing
+#    pwsh -NoProfile -File scripts/e2e-web-console-login.ps1 -SkipVite   # needs TH_E2E_*
+
+# NON-PROD · Option B separated SPA swap
+# docker build -f deploy/separated/Dockerfile.frontend -t new-api-frontend:local .
+# redeploy frontend service only
+# pwsh -NoProfile -File deploy/separated/smoke.ps1 -FrontendBase http://127.0.0.1:8080
+```
 
 ## What not to do
 

@@ -68,6 +68,23 @@ Worktree `C:\Users\yuanjia\orca\workspaces\src\w3-th-claude` · branch `xvyimu/w
 
 W3 also: Gin/redis **still defer** · web-console quality re-green · **no** production `FRONTEND_MODE` change · **no** push.
 
+### W4 pre-flip evidence pack (2026-07-23 · **D7 FLIP: NOT EXECUTED** · dual prep)
+
+Worktree `C:\Users\yuanjia\orca\workspaces\src\w4-th-claude` · branch `xvyimu/w4-th-claude` · tip ~`97516c0f` + W4 artifacts. Dossier: `docs/ops/w3-d7-gate-dossier.md` (W4 refresh). Report: `docs/ops/w4-arch-upgrade-transithub-claude.md`. Nonprod pack: `docs/ops/w4-d7-nonprod-verify.md` · `scripts/w4-d7-nonprod-verify.ps1`.
+
+| Gate | Result | Notes |
+|------|--------|-------|
+| G1 | **green** | Module2 tree unchanged |
+| G2 | **blocked (credentials)** | W4 orchestrator exit **10** when `TH_E2E_*` unset (no fake green); legacy e2e exit **1** |
+| G3 | **blocked live · contract green** | validator exit 0; channels RO step in pack (key-omission) needs G2 |
+| G4 | **blocked local · CI SSOT** | docker still absent |
+| G5 | **green** | `go build -tags frontend_external` exit **0** |
+| G6 | **blocked (not run)** | soak checklist only |
+| G7 | **blocked (doc + min cmd seq)** | rollback min sequence in w4-d7-nonprod-verify.md — not timed |
+| G8 | **blocked** | No human `D7 flip 现在` |
+
+W4 also: one-shot nonprod verify script · stack-matrix W4 close-out · Gin/redis **still defer** · **no** production `FRONTEND_MODE` · **no** push.
+
 ## Topology (target)
 
 ```text
