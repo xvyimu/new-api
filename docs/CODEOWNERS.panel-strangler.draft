@@ -1,0 +1,20 @@
+# Phase1 panel strangler — CODEOWNERS draft (WP-V6)
+
+This file is a **draft**. Copy into `/.github/CODEOWNERS` (or repo root `CODEOWNERS`) when the team handle list is confirmed.
+Until then, enforce via PR checklist in `docs/legacy-frontend-gate.md`.
+
+```text
+# Target Vue console — default for new UI
+/web-console/          @xvyimu
+
+# LEGACY React — hotfixes only (see docs/legacy-frontend-gate.md)
+/web/default/          @xvyimu
+/web/classic/          @xvyimu
+
+# Delivery seam
+/deploy/separated/     @xvyimu
+/docs/operations/web-console-cutover-rollback.md  @xvyimu
+/docs/legacy-frontend-gate.md                     @xvyimu
+```
+
+Replace `@xvyimu` with the real GitHub team/user list before enabling branch protection.
