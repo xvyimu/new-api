@@ -2,11 +2,12 @@
 
 | 字段 | 值 |
 |------|-----|
-| 日期 | 2026-07-22 |
+| 日期 | 2026-07-22 · **W2 增量 2026-07-23** |
 | 消费方 | `web-console`（WP-V） |
 | 提供方 | Go management plane `/api` + probes |
 | 版本策略 | **不**引入 `/api/v2`；兼容现有 React 所用约定 |
-| 真源 | 实现代码；OpenAPI 仅参考（见 OPENAPI_AUDIT） |
+| 真源 | 实现代码；机器可读子集 `docs/openapi/console-subset.yaml`（见 OPENAPI_AUDIT） |
+| 可测入口 | `python scripts/validate-console-contract.py`（exit 0 = 路径/schema 齐） |
 
 ---
 
@@ -116,12 +117,26 @@
 
 ---
 
-## 3. 可选（P0 后 / T4）
+## 3. 渠道只读（P0 · cutover G3 · W2 升入契约）
+
+### 3.1 `GET /api/channel/`
+
+| | |
+|--|--|
+| Auth | **AdminAuth** + permission **ChannelRead** |
+| 头 | 登录后 session cookie + `New-Api-User: <user id>`（与 React/Vue 一致） |
+| 查询（常用） | `p` / `page_size` · `id_sort` · `sort_by` · `sort_order` · `tag_mode` · `group` · `status` · `type` |
+| 成功 `data` | `{ items, total, page, page_size, type_counts }` |
+| **密钥** | 列表路径 **`Omit("key")` + `clearChannelInfo`** — 响应不得含明文 API key；取 key 走独立 Root 路径 `POST /api/channel/:id/key`（**不在**本子集） |
+| 失败 | 未登录/无权限由中间件中断；业务失败多为 `success: false` |
+
+实现：`controller.GetAllChannels` · 路由 `router/channel-router.go`。
+
+## 3.2 可选（P0 后 / T4）
 
 | 路径 | 用途 | Auth |
 |------|------|------|
 | `GET /api/setup` | 安装向导 | 公开 |
-| `GET /api/channel/` | 渠道只读列表 | Admin + ChannelRead |
 | `GET /api/system-info/instances` | 实例信息 | Root |
 | `POST /api/rum` | Web Vitals | 匿名；body 仅 name/value/rating |
 
@@ -148,5 +163,10 @@
 
 ## 6. 给 OpenAPI 子集的映射
 
-机器可读草稿：`docs/openapi/console-subset.yaml`（G3 附属）。  
-字段以本文 + 实机抓包为准；yaml 落后时 **以本文与代码为准**。
+| 工件 | 角色 |
+|------|------|
+| `docs/openapi/console-subset.yaml` | **W2 机器可读契约**（probes · status · login/logout/self · **channels RO**）· 版本 `1.1.0-w2` |
+| `python scripts/validate-console-contract.py` | 无第三方依赖的结构/覆盖校验（可 CI 化） |
+| `python scripts/openapi_route_diff.py` | 只读：子集 vs 全量 api.json · relay drift |
+
+字段以本文 + 实机抓包为准；yaml 落后时 **以本文与代码为准**。生成 TS client 时以 yaml 为输入，禁止从滞后 `api.json` 全量生成控制台类型。

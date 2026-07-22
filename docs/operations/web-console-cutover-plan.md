@@ -36,6 +36,21 @@ Recorded on worktree `C:\Users\yuanjia\orca\workspaces\src\w1-th-claude` · bran
 
 Also green (TARGET gates 1–2, not a traffic flip): `web-console` `pnpm install --frozen-lockfile` · `typecheck` · `test` · `build` · NOTICE strings — all exit **0**.
 
+### W2 pre-flip evidence pack (2026-07-23 · **no production flip · no D7**)
+
+Worktree `C:\Users\yuanjia\orca\workspaces\src\w2-th-claude` · branch `xvyimu/w2-th-claude`. Full table: `docs/ops/w2-arch-upgrade-transithub-claude.md`.
+
+| Gate | Result | Notes |
+|------|--------|-------|
+| G1 | **Met on tree** | Unchanged; + contract/migrate artifacts under `docs/openapi` · `docs/ops` |
+| G2 | **Still blocked (credentials)** | Credential **checklist** written: `docs/ops/w2-cutover-e2e-credentials.md`. Needs operator-supplied non-prod `TH_E2E_USER`/`TH_E2E_PASS`. Not production. |
+| G3 | **Contract ready · live needs G2** | `GET /api/channel/` in `docs/openapi/console-subset.yaml` + `CONSOLE_API_CONTRACT.md` §3; key omission documented. Live list still needs session from G2. |
+| G4 | **Blocked (no Docker CLI)** unless host changes | CI `image-reproducibility` remains authority |
+| G5 | Re-verify in W2 report | `go build -tags frontend_external` |
+| G6–G8 | Open | Staging soak / rollback / owner flip — **W3 + human gate** |
+
+W2 also: SQLite empty migrate green · three-dialect **strategy** doc · Gin/redis **still defer** (no go.mod bump).
+
 ## Topology (target)
 
 ```text

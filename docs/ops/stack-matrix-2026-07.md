@@ -1,31 +1,31 @@
 # TransitHub · stack matrix · 2026-07
 
-> W1 baseline card. Tracks **current → H2 2026 target → this wave**.  
+> Stack card: **current → H2 2026 target → wave status**.  
 > Companion: portfolio plan `D:\orca\.planning\portfolio-arch-upgrade-2026h2\repos\th.md`.  
 > Does **not** authorize production cutover, dependency bumps that fail CI, or React deletion.
 
-## Worktree identity (W1 evidence run)
+## Worktree identity
 
-| Field | Value |
-|-------|--------|
-| Worktree | `C:\Users\yuanjia\orca\workspaces\src\w1-th-claude` |
-| Branch | `xvyimu/w1-th-claude` |
-| HEAD | `baecf0b1532eeb3edf84538a691e5cd00ac35f9e` |
-| Date | 2026-07-23 |
-| Agent | claude |
+| Field | W1 | W2 |
+|-------|----|----|
+| Worktree | `...\w1-th-claude` | `C:\Users\yuanjia\orca\workspaces\src\w2-th-claude` |
+| Branch | `xvyimu/w1-th-claude` | `xvyimu/w2-th-claude` |
+| Date | 2026-07-23 | 2026-07-23 |
+| Agent | claude | claude |
 
 ## Matrix
 
-| Layer | Current (repo tip) | Target (H2 ~2027-01) | W1 this wave |
-|-------|--------------------|----------------------|--------------|
-| **Go** | `go 1.25.1` · `toolchain go1.26.5` | Pin CI to toolchain; follow security patches | **CI already pins `go-version: 1.26.5`** (`.github/workflows/quality.yml`). Local agent Go = 1.26.5. No go.mod change. |
-| **Gin** | `github.com/gin-gonic/gin v1.9.1` | Maintain line **≥1.10** after soak | **Spike only** — latest published `v1.12.0`. No bump (see [gin-redis-spike](./w1-gin-redis-spike.md)). |
-| **Redis client** | `github.com/go-redis/redis/v8 v8.11.5` | **v9** (`github.com/redis/go-redis/v9`) on dedicated worktree | **Spike only** — v9 latest `v9.21.0`; 5 import sites. Default **no bump in W1**. |
-| **GORM** | `gorm.io/gorm v1.25.2` (+ mysql/postgres/sqlite drivers) | Maintain line + three-dialect empty-DB CI | Documented; migrate CI still SQLite-only for file baseline. No GORM bump in W1. |
-| **web-console** | Vue 3.5 · Vite 8 · Naive UI · **pnpm 11.5.0** · Node **22** in CI | Patch follow; e2e into main CI later (W2) | **Quality gates re-run green** (install/typecheck/test/build + NOTICE). |
-| **React default** | `web/default` **LEGACY** (feature freeze) | No new features → time-boxed shrink after D7 | Unchanged; freeze remains (`docs/legacy-frontend-gate.md`). |
-| **Node (console CI)** | Node 22 · pnpm 11.5 | Align portfolio matrix (crosscut) | Matches `crosscut.md` target for TH console. |
-| **Bun (legacy web)** | Bun 1.3.14 in quality/release | Keep for React themes until D7 | Unchanged. |
+| Layer | Current (repo tip) | Target (H2 ~2027-01) | W1 | W2 this wave |
+|-------|--------------------|----------------------|----|--------------|
+| **Go** | `go 1.25.1` · `toolchain go1.26.5` | Pin CI to toolchain; security patches | CI pins `1.26.5` | Unchanged |
+| **Gin** | `github.com/gin-gonic/gin v1.9.1` | Maintain line **≥1.10** after soak | Spike only | **Still defer** — see [w1-gin-redis-spike](./w1-gin-redis-spike.md) |
+| **Redis client** | `github.com/go-redis/redis/v8 v8.11.5` | **v9** dedicated wt | Spike only | **Still defer** (no go.mod bump) |
+| **GORM** | `gorm.io/gorm v1.25.2` | Maintain + three-dialect empty-DB | Doc only | SQLite empty migrate **green**; MySQL/PG **strategy** ([migrate-three-dialect-strategy](./migrate-three-dialect-strategy.md)) |
+| **web-console** | Vue 3.5 · Vite 8 · pnpm 11.5 · Node 22 CI | Patch follow; e2e main CI later | Quality green | Quality re-run; contract machine-readable |
+| **Console API contract** | Markdown + partial yaml | OpenAPI subset → TS client path | — | **`console-subset.yaml` 1.1.0-w2** + `validate-console-contract.py` (channels RO) |
+| **React default** | `web/default` LEGACY freeze | Shrink after D7 | Unchanged | Unchanged |
+| **Node (console CI)** | Node 22 · pnpm 11.5 | Crosscut align | Match | Match |
+| **Bun (legacy web)** | Bun 1.3.14 | Until D7 | Unchanged | Unchanged |
 
 ## CI pins (authoritative)
 
@@ -34,7 +34,7 @@
 | `go-quality` / `sqlite-migrate` | Go **1.26.5** |
 | `web-quality` | Bun **1.3.14** |
 | `web-console-quality` | Node **22** · pnpm **11.5.0** |
-| Vue image builder | `node:22-bookworm` · pnpm 11.5.0 (`deploy/separated/Dockerfile.frontend.vue`) |
+| Vue image builder | `node:22-bookworm` · pnpm 11.5.0 |
 
 ## Architecture boundary (unchanged)
 
@@ -46,15 +46,18 @@
 
 | Wave | Stack / arch |
 |------|----------------|
-| W2 | Gin/redis evaluation merge if soak green · OpenAPI/contract · migrate multi-dialect CI · staging Vue soak |
-| W3 | **D7 human gate** · rollback drill record |
-| W4 | React shrink strategy or schedule · matrix close-out |
+| W3 | **D7 human gate** · rollback drill · optional dedicated Gin **or** redis bump wt |
+| W4 | React shrink strategy or schedule · matrix close-out · MySQL/PG file baselines if scheduled |
 
 ## Related
 
 | Path | Role |
 |------|------|
-| [w1-arch-upgrade-transithub-claude.md](./w1-arch-upgrade-transithub-claude.md) | W1 report + command exits |
-| [w1-gin-redis-spike.md](./w1-gin-redis-spike.md) | Gin/redis upgrade notes |
-| [../operations/web-console-cutover-plan.md](../operations/web-console-cutover-plan.md) | Cutover G1–G8 (no flip) |
-| [../ARCHITECTURE_TARGET.md](../ARCHITECTURE_TARGET.md) | Phase1 target contract |
+| [w1-arch-upgrade-transithub-claude.md](./w1-arch-upgrade-transithub-claude.md) | W1 report |
+| [w2-arch-upgrade-transithub-claude.md](./w2-arch-upgrade-transithub-claude.md) | W2 report |
+| [w1-gin-redis-spike.md](./w1-gin-redis-spike.md) | Gin/redis — W2 still defer |
+| [migrate-three-dialect-strategy.md](./migrate-three-dialect-strategy.md) | Empty-DB dialect policy |
+| [w2-cutover-e2e-credentials.md](./w2-cutover-e2e-credentials.md) | G2 non-prod env list |
+| [../openapi/console-subset.yaml](../openapi/console-subset.yaml) | Machine contract |
+| [../operations/web-console-cutover-plan.md](../operations/web-console-cutover-plan.md) | Cutover G1–G8 |
+| [../ARCHITECTURE_TARGET.md](../ARCHITECTURE_TARGET.md) | Phase1 target |

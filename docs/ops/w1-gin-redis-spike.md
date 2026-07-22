@@ -1,9 +1,11 @@
-# W1 spike · Gin / go-redis upgrade notes
+# W1/W2 spike · Gin / go-redis upgrade notes
 
-> **Decision (W1): document only — do not bump on this branch.**  
-> Bumps need a dedicated worktree + full `go test` / relay smoke. Portfolio plan schedules redis **v9** for W2.
+> **Decision (W1): document only — do not bump.**  
+> **Decision (W2 · 2026-07-23): still defer — no Gin 1.10 and no redis v9 bump on this branch.**  
+> Reasons: W2 main knife is **console contract + migrate three-dialect evidence**; Gin blast radius ~300+ imports; redis v9 is runtime-critical (auth cache / rate limit). Portfolio still targets maintain-line Gin + redis v9 in a **dedicated** worktree after cutover soak prep, not bundled with contract/migrate PRs.
 
-Recorded 2026-07-23 · worktree `C:\Users\yuanjia\orca\workspaces\src\w1-th-claude` · HEAD `baecf0b1532eeb3edf84538a691e5cd00ac35f9e`.
+Recorded W1: 2026-07-23 · worktree `C:\Users\yuanjia\orca\workspaces\src\w1-th-claude` · HEAD `baecf0b1532eeb3edf84538a691e5cd00ac35f9e`.  
+W2 reaffirm: worktree `C:\Users\yuanjia\orca\workspaces\src\w2-th-claude` · branch `xvyimu/w2-th-claude`.
 
 ## Current
 
@@ -45,7 +47,11 @@ go list -m -versions github.com/redis/go-redis/v9
 
 ### W1 recommendation
 
-**No bump.** Gap is maintain-line hygiene, not a security emergency for this wave. Prefer W2 after cutover evidence pack stabilizes.
+**No bump.** Gap is maintain-line hygiene, not a security emergency for this wave. Prefer later wave after cutover evidence pack stabilizes.
+
+### W2 recommendation
+
+**Still no bump (defer).** Do not combine with contract/migrate deliverables. Next candidate window: dedicated wt after G2 credentials + staging soak prep, still **before** D7 production flip.
 
 ## go-redis v8 → v9
 
@@ -75,10 +81,15 @@ go list -m -versions github.com/redis/go-redis/v9
 
 ### W1 recommendation
 
-**No bump.** Blast radius is small file-count but high runtime criticality (auth cache, rate limit). Portfolio card already places redis v9 in **W2**.
+**No bump.** Blast radius is small file-count but high runtime criticality (auth cache, rate limit). Portfolio card placed redis v9 in W2 as evaluation window.
+
+### W2 recommendation
+
+**Still no bump (defer).** Same five import sites; still require Redis-up + Redis-disabled test matrix on a dedicated branch. **Not** done in W2-th-claude.
 
 ## Explicit non-goals of this spike
 
-- No `go.mod` / `go.sum` edits on W1 branch for Gin/redis.
+- No `go.mod` / `go.sum` edits on W1/**W2** branch for Gin/redis.
 - No production Redis topology change.
 - No GORM major/minor bump in the same effort.
+- No dual Gin+redis major in one PR.

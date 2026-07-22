@@ -1,39 +1,49 @@
 openapi: 3.0.3
 info:
-  title: TransitHub Console API Subset (Phase1)
-  version: "1.0.0-phase1"
+  title: TransitHub Console API Subset
+  version: "1.1.0-w2"
   description: |
-    P0 paths for web-console (Vue). Source of truth remains Gin handlers.
-    See docs/gateway/CONSOLE_API_CONTRACT.md.
+    Machine-readable P0 contract for web-console (Vue) and cutover smoke.
+    Source of truth remains Gin handlers; this file is the generatable/testable
+    subset (probes · status · session · channels RO).
+    Human companion: docs/gateway/CONSOLE_API_CONTRACT.md
+    Validate: python scripts/validate-console-contract.py
 servers:
   - url: /
-    description: Same-origin with console
+    description: Same-origin with console (Nginx proxies /api + probes to Go)
+tags:
+  - name: probes
+    description: Process liveness / readiness (no session)
+  - name: console
+    description: Public bootstrap + session
+  - name: channels
+    description: Admin channel read-only (session + permission)
 paths:
   /healthz:
     get:
       operationId: getHealthz
       tags: [probes]
       summary: Liveness
+      security: []
       responses:
         "200":
-          description: OK
+          description: Process up
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status: { type: string, example: ok }
-                  plane:
-                    type: string
-                    enum: [all, management, relay]
+                $ref: "#/components/schemas/ProbeOk"
+              example:
+                status: ok
+                plane: all
   /livez:
     get:
       operationId: getLivez
       tags: [probes]
-      summary: Liveness (alias)
+      summary: Liveness (alias of healthz)
+      security: []
       responses:
         "200":
-          description: OK
+          description: Process up
           content:
             application/json:
               schema:
@@ -42,7 +52,8 @@ paths:
     get:
       operationId: getReadyz
       tags: [probes]
-      summary: Readiness (DB/Redis)
+      summary: Readiness (DB; Redis when enabled)
+      security: []
       responses:
         "200":
           description: Ready
@@ -50,34 +61,46 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [status]
                 properties:
-                  status: { type: string, example: ok }
+                  status:
+                    type: string
+                    example: ok
         "503":
           description: Not ready
           content:
             application/json:
               schema:
                 type: object
+                required: [status, component]
                 properties:
-                  status: { type: string, example: unavailable }
-                  component: { type: string, enum: [database, redis] }
+                  status:
+                    type: string
+                    example: unavailable
+                  component:
+                    type: string
+                    enum: [database, redis]
   /api/status:
     get:
       operationId: getApiStatus
       tags: [console]
       summary: Public console bootstrap status
+      security: []
       responses:
         "200":
-          description: Envelope with data map (version, login flags, ...)
+          description: |
+            HTTP 200 with envelope. Client MUST use `success` field
+            (business errors may still be HTTP 200 + success=false historically).
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessEnvelope"
+                $ref: "#/components/schemas/StatusResponse"
   /api/user/login:
     post:
       operationId: postUserLogin
       tags: [console]
-      summary: Password login; sets session cookie
+      summary: Password login; sets session cookie when fully authenticated
+      security: []
       requestBody:
         required: true
         content:
@@ -94,7 +117,7 @@ paths:
           headers:
             Set-Cookie:
               schema: { type: string }
-              description: Session cookie when fully logged in
+              description: Session cookie when fully logged in (not pending 2FA)
           content:
             application/json:
               schema:
@@ -104,6 +127,7 @@ paths:
       operationId: getUserLogout
       tags: [console]
       summary: Clear session cookie
+      security: []
       responses:
         "200":
           description: success true
@@ -115,7 +139,16 @@ paths:
     get:
       operationId: getUserSelf
       tags: [console]
-      summary: Current user (session required)
+      summary: Current user (session + New-Api-User header)
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: New-Api-User
+          in: header
+          required: true
+          description: Logged-in user id (legacy React/Vue convention)
+          schema:
+            type: string
       responses:
         "200":
           description: success true with user profile
@@ -125,19 +158,118 @@ paths:
                 $ref: "#/components/schemas/SuccessEnvelope"
         "401":
           description: Not authenticated (middleware)
+  /api/channel/:
+    get:
+      operationId: getChannelsList
+      tags: [channels]
+      summary: Paginated channel list (read-only; API keys omitted)
+      description: |
+        Gin: GET /api/channel/ · AdminAuth + ChannelRead.
+        Implementation uses GORM Omit("key") and clearChannelInfo so secret
+        material is not returned on list. Cutover gate G3.
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: New-Api-User
+          in: header
+          required: true
+          schema: { type: string }
+        - name: p
+          in: query
+          description: Page (common.GetPageQuery)
+          schema: { type: integer, minimum: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, minimum: 1 }
+        - name: id_sort
+          in: query
+          schema: { type: boolean }
+        - name: sort_by
+          in: query
+          schema: { type: string }
+        - name: sort_order
+          in: query
+          schema: { type: string, enum: [asc, desc] }
+        - name: tag_mode
+          in: query
+          schema: { type: boolean }
+        - name: group
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          description: "enabled|1 · disabled|0 · omit for all"
+          schema: { type: string }
+        - name: type
+          in: query
+          description: Channel type filter (integer as string)
+          schema: { type: string }
+      responses:
+        "200":
+          description: Envelope with items/total/page (keys not present)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChannelListResponse"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing admin / ChannelRead permission
 components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: session
+      description: gin-contrib/sessions cookie after password login
   schemas:
     ProbeOk:
       type: object
+      required: [status]
       properties:
-        status: { type: string }
-        plane: { type: string }
+        status:
+          type: string
+          example: ok
+        plane:
+          type: string
+          enum: [all, management, relay]
     SuccessEnvelope:
       type: object
+      required: [success]
       properties:
         success: { type: boolean }
         message: { type: string }
         data: {}
+    StatusData:
+      type: object
+      description: Stable keys preferred by console; not exhaustive
+      properties:
+        version: { type: string }
+        start_time: { type: number }
+        system_name: { type: string }
+        logo: { type: string }
+        footer_html: { type: string }
+        password_login_enabled: { type: boolean }
+        register_enabled: { type: boolean }
+        password_register_enabled: { type: boolean }
+        turnstile_check: { type: boolean }
+        turnstile_site_key: { type: string }
+        github_oauth: { type: boolean }
+        discord_oauth: { type: boolean }
+        oidc_enabled: { type: boolean }
+        passkey_login: { type: boolean }
+        setup: { type: boolean }
+        quota_display_type: { type: string }
+        display_in_currency: { type: boolean }
+        server_address: { type: string }
+        rum_enabled: { type: boolean }
+    StatusResponse:
+      allOf:
+        - $ref: "#/components/schemas/SuccessEnvelope"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/StatusData"
     LoginResponse:
       allOf:
         - $ref: "#/components/schemas/SuccessEnvelope"
@@ -153,3 +285,45 @@ components:
                 status: { type: integer }
                 group: { type: string }
                 require_2fa: { type: boolean }
+    ChannelListItem:
+      type: object
+      description: Channel row without secret key field on list path
+      properties:
+        id: { type: integer }
+        type: { type: integer }
+        status: { type: integer }
+        name: { type: string }
+        weight: { type: integer }
+        base_url: { type: string }
+        models: { type: string }
+        group: { type: string }
+        priority: { type: integer }
+        tag: { type: string }
+        balance: { type: number }
+        used_quota: { type: integer }
+        remark: { type: string }
+        channel_info:
+          type: object
+          additionalProperties: true
+      # key MUST NOT appear on list responses (Omit + clearChannelInfo)
+    ChannelListData:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChannelListItem"
+        total: { type: integer }
+        page: { type: integer }
+        page_size: { type: integer }
+        type_counts:
+          type: object
+          additionalProperties:
+            type: integer
+    ChannelListResponse:
+      allOf:
+        - $ref: "#/components/schemas/SuccessEnvelope"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/ChannelListData"

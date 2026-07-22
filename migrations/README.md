@@ -30,11 +30,13 @@ Version table: `schema_migrations` (managed by golang-migrate).
 
 ## Three-dialect policy
 
-| Dialect | Role | Baseline status (Phase1) |
-|---------|------|---------------------------|
-| **SQLite** | Dev / edge / CI required | `000001_baseline` verified empty-DB `up` |
+| Dialect | Role | Baseline status (Phase1 + W2) |
+|---------|------|-------------------------------|
+| **SQLite** | Dev / edge / CI required | `000001_baseline` verified empty-DB `up` (CI + `scripts/migrate-three-dialect.ps1`) |
 | **MySQL** | Common production | Application support remains; no file-migration baseline has been validated yet |
 | **PostgreSQL** | Preferred production | Application support remains; no file-migration baseline has been validated yet |
+
+W2 ops note: `docs/ops/migrate-three-dialect-strategy.md` + runner `scripts/migrate-three-dialect.ps1` (SQLite required; MySQL/PG opt-in env only).
 
 Hard constraint (AGENTS.md): **do not remove SQLite or MySQL** without a product decision.
 

@@ -84,6 +84,7 @@ CONSOLE_SUBSET = {
     "POST /api/user/login",
     "GET /api/user/logout",
     "GET /api/user/self",
+    "GET /api/channel/",  # W2: channels RO (cutover G3)
 }
 
 
