@@ -40,7 +40,8 @@ All gates are required before a production-default Vue switch:
 3. On a non-production environment, same-origin login, `/api/status`, and the approved read-only console pages behave as expected.
 4. The SQL migration path has an empty-database validation strategy for SQLite, MySQL, and PostgreSQL; the current SQLite-only baseline is not sufficient.  
    See `migrations/README.md` three-dialect policy + `docs/operations/db-migrations.md` force-baseline notes.
-5. An operator approves a documented cutover plan (`docs/operations/web-console-cutover-plan.md` G1–G8). Until then, do not change production `FRONTEND_MODE`, traffic routing, or images. **D7 remains human gate.**
+5. An operator approves a documented cutover plan (`docs/operations/web-console-cutover-plan.md` G1–G8). Until then, do not change production `FRONTEND_MODE`, traffic routing, or images. **D7 remains human gate.**  
+   **W1 (2026-07-23):** pre-flip evidence pack recorded — G5 `frontend_external` build exit 0; web-console quality re-green; G2 blocked on non-prod credentials; G4 blocked without Docker CLI on agent host (CI image job remains SSOT). See `docs/ops/w1-arch-upgrade-transithub-claude.md` and the W1 table in the cutover plan. **Still no production flip.**
 
 Rollback is configuration/image selection, not a source rewrite: restore the embedded React frontend or use `deploy/separated/Dockerfile.frontend` with the same Nginx proxy contract. See [the rollback runbook](operations/web-console-cutover-rollback.md).
 

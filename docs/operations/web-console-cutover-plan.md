@@ -21,6 +21,21 @@ Same-origin public console served from Vue `web-console`, backend `FRONTEND_MODE
 | G7 | Rollback drill | Flip back to React image/binary once on staging |
 | G8 | Owner sign-off | Explicit “cutover now” from you |
 
+### W1 pre-flip evidence pack (2026-07-23 · **no production flip**)
+
+Recorded on worktree `C:\Users\yuanjia\orca\workspaces\src\w1-th-claude` · branch `xvyimu/w1-th-claude` · HEAD `baecf0b1532eeb3edf84538a691e5cd00ac35f9e`. Full command table: `docs/ops/w1-arch-upgrade-transithub-claude.md`.
+
+| Gate | Result | Notes |
+|------|--------|-------|
+| G1 | **Met on tree** | `web-console/`, `migrations/`, `docs/gateway/*` present on tip |
+| G2 | **Blocked (credentials)** | Backend at `:3000` reachable; default `root/123456` login failed (`success:false`). Need dedicated non-prod `TH_E2E_USER`/`TH_E2E_PASS` (see `web-console/E2E.md`). Not re-run against production. |
+| G3 | Not re-exercised this wave | Prior RO channels work remains; live list needs auth from G2 |
+| G4 | **Blocked (no Docker CLI)** | `docker` not on PATH on this agent host. Image path covered by CI `image-reproducibility` + `Dockerfile.frontend.vue`. |
+| G5 | **Pass · exit 0** | `go build -trimpath -buildvcs=true -tags frontend_external -o new-api-backend-w1.exe .` (binary gitignored via `*.exe`) |
+| G6–G8 | Open | Staging soak / rollback drill / owner flip — **W3 + human gate** |
+
+Also green (TARGET gates 1–2, not a traffic flip): `web-console` `pnpm install --frozen-lockfile` · `typecheck` · `test` · `build` · NOTICE strings — all exit **0**.
+
 ## Topology (target)
 
 ```text
