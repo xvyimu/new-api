@@ -52,6 +52,17 @@
 
 </div>
 
+## 产品方案与文档地图
+
+| 文档 | 用途 |
+|------|------|
+| [docs/PRODUCT-LAYERS.md](./docs/PRODUCT-LAYERS.md) | 产品分层 L0–L6 · **L0 身份** · **L4 验收** |
+| [docs/PROJECT.md](./docs/PROJECT.md) | 形态与栈 SSOT |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | 协作 · Issues/PRs |
+| [SECURITY.md](./SECURITY.md) | 安全策略与漏洞报告 |
+
+英文主 README：[README.md](./README.md)。
+
 ## 📝 项目说明
 
 > [!IMPORTANT]

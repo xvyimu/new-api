@@ -39,6 +39,17 @@
 
 </div>
 
+## Product plan & docs map
+
+| Doc | What |
+|-----|------|
+| [docs/PRODUCT-LAYERS.md](./docs/PRODUCT-LAYERS.md) | Product layers L0–L6 · **L0 identity** · **L4 acceptance** |
+| [docs/PROJECT.md](./docs/PROJECT.md) | Form & stack SSOT |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | Collaboration · public issues/PRs |
+| [SECURITY.md](./SECURITY.md) | Security policy & vulnerability reporting |
+
+Primary Chinese README: [README.zh_CN.md](./README.zh_CN.md).
+
 ## About this distribution
 
 **TransitHub** is independently maintained by **xvyimu** at [github.com/xvyimu/TransitHub](https://github.com/xvyimu/TransitHub).  
