@@ -21,8 +21,8 @@
 | **main** | `D:\TransitHub\src` | `main` | product root | keep |
 | **th-coord** | `…\src\th-coord` | `xvyimu/th-coord` | **本总控** | active |
 | **th-coord-d7** | `…\src\th-coord-d7` | `xvyimu/th-coord-d7` | sibling D7 coord | freeze stack; do not duplicate agents |
-| **th-console-quality** | (Orca create) | `xvyimu/th-console-quality` | M-TH-console-quality | **dispatched** |
-| **th-backend-stable-scout** | (Orca create) | `xvyimu/th-backend-stable-scout` | M-TH-backend-stable-scout | **dispatched** |
+| **th-console-quality** | `…\src\th-console-quality` | `xvyimu/th-console-quality` | M-TH-console-quality · agent Claude live | **dispatched / in-progress** |
+| **th-backend-stable-scout** | `…\src\th-backend-stable-scout` | `xvyimu/th-backend-stable-scout` | M-TH-backend-stable-scout · agent Claude live | **dispatched / in-progress** |
 
 Historical (not live unless recreated): w1–w4 th-claude, wave8-th-codex, th-d7-scout (branch `xvyimu/th-d7-scout` @ `35194ff3` on origin — inherit docs only).
 
