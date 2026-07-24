@@ -1,0 +1,13 @@
+产品：TransitHub · D:\TransitHub\src
+模块 ID：M-TH-g3-channels
+边界内：docs/ops/ · scripts/validate-console-contract.py · 可读 w4 pack；不改生产
+先读：docs/ops/th-g2-e2e-nonprod-evidence-2026-07-24.md · docs/gateway/CONSOLE_API_CONTRACT.md · docs/ops/th-e2e-gate-card.md
+栈锁：无 D7 · 无 FRONTEND_MODE 生产 · 无删 web/default · 无双写
+禁：push 除非已授、假绿、写 secrets
+做完：docs/ops/th-g3-channels-evidence-2026-07-24.md
+必做：
+1) python scripts/validate-console-contract.py → 记 exit（期望 0）
+2) 若 TH_E2E_* unset：明确 **G3 live blocked**（依赖 G2），不要用默认 root 登录冒充绿
+3) 若 set：跑 w4 pack 或等价 authenticated GET /api/channel/ 并检查 key-omission（失败 exit 4）
+4) 对照 cutover-plan G3：列表可用、keys 不出现
+结束：DONE + in-review；git commit；回执 th-coord；D7 NOT EXECUTED

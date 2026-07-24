@@ -16,13 +16,13 @@
 
 | ID | wt name | Scope | Gate link | Status | Evidence |
 |----|---------|-------|-----------|--------|----------|
-| **W1a** | `th-console-quality` | pnpm typecheck/test/build + debt + W4 pack | console quality · G2/G3 honest | **DONE · reviewed** · wt **FROZEN** (rm PTY fail) | `docs/ops/th-console-quality-evidence-2026-07-24.md` @ `4afcf5b3` |
-| **W1b** | `th-backend-stable-scout` | migrations 3DB · pool/timeout · Redis map | backend stable | **DONE · reviewed** · wt **FROZEN** (rm PTY fail) | `docs/ops/th-backend-stable-scout-evidence-2026-07-24.md` @ `d1dd3278` |
-| **W2** | `th-g2-e2e-nonprod` | Re-run W4 login; if no `TH_E2E_*` write **blocked** file only | G2 | **live** | — |
-| **W3** | `th-g3-channels` | Channels RO path acceptance (contract + live if G2) | G3 | queued (depends W2) | contract already green |
-| **W4** | `th-g4-image-repro` | Vue image repro; Docker else **CI SSOT** paste template | G4 | queued | — |
-| **W5** | `th-g5-backend-regression` | `go test` slice + `go build -tags frontend_external` | G5 refresh | **live** | prior green W4/scout |
-| **W6** | `th-g6-soak-checklist` | Fill/execute soak checklist half-or-full | G6 | queued | checklist exists |
+| **W1a** | `th-console-quality` | pnpm typecheck/test/build + debt + W4 pack | console quality · G2/G3 honest | **DONE · reviewed** · wt rm (human) | `th-console-quality-evidence-2026-07-24.md` @ `4afcf5b3` |
+| **W1b** | `th-backend-stable-scout` | migrations 3DB · pool/timeout · Redis map | backend stable | **DONE · reviewed** · wt rm (human) | `th-backend-stable-scout-evidence-2026-07-24.md` @ `d1dd3278` |
+| **W2** | `th-g2-e2e-nonprod` | W4 login; no `TH_E2E_*` → **blocked** file | G2 | **DONE · reviewed · closing** | `th-g2-e2e-nonprod-evidence-2026-07-24.md` @ `d1957b64` · exit **10** |
+| **W3** | `th-g3-channels` | Channels RO path (contract + live if G2) | G3 | **live / opening** | contract green; live blocked w/ G2 |
+| **W4** | `th-g4-image-repro` | Vue image; Docker else **CI SSOT** | G4 | **live / opening** | — |
+| **W5** | `th-g5-backend-regression` | `go test` + `go build -tags frontend_external` | G5 | **DONE · reviewed** · wt rm · tip `d6e3dfae` | `th-g5-backend-regression-evidence-2026-07-24.md` · exits **0** |
+| **W6** | `th-g6-soak-checklist` | Soak checklist half-or-full · no fake 24h | G6 | **live / opening** | — |
 | **W7** | `th-g7-rollback-drill` | Rollback doc + command dry-run (no prod) | G7 | queued | — |
 | **W8** | `th-legacy-gate-scan` | Scan `web/default` for non-hotfix feature drift | legacy gate | queued | — |
 | **W9** | `th-be-migrate-3db` | 3DB migrate quality audit RO + small fix if approved | backend | queued (W1b feeds) | refund_intents drift noted |

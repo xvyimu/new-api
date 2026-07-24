@@ -1,0 +1,13 @@
+产品：TransitHub · D:\TransitHub\src
+模块 ID：M-TH-g6-soak-checklist
+边界内：docs/ops/w3-staging-soak-checklist.md · 本 evidence · 不改生产
+先读：docs/ops/w3-staging-soak-checklist.md · docs/operations/web-console-cutover-plan.md G6
+栈锁：无 D7 · 无假绿 24h
+禁：把未跑 soak 写成 green；push 除非授
+做完：docs/ops/th-g6-soak-checklist-evidence-2026-07-24.md
+必做：
+1) 复制/引用 soak 清单关键行（T0/T+6/12/24）
+2) 本机/agent 能做的半实测：healthz + /api/status 瞬时抽样（记时间戳+HTTP）— 标明 **不是** ≥24h soak
+3) 明确 G6 status：**blocked (not run full soak)** 或若操作员已填则粘贴摘要
+4) 操作员 unblock 步骤（staging 归属）
+结束：DONE + in-review；git commit；回执 th-coord；D7 NOT EXECUTED

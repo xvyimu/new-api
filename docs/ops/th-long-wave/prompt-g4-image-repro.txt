@@ -1,0 +1,12 @@
+产品：TransitHub · D:\TransitHub\src
+模块 ID：M-TH-g4-image-repro
+边界内：deploy/separated/Dockerfile.frontend.vue · .github/workflows/quality.yml · docs/ops/
+先读：docs/operations/web-console-cutover-plan.md G4 · docs/ops/w3-d7-gate-dossier.md G4
+栈锁：无 D7 · 无生产 flip
+禁：push 除非授、假绿（无 docker 却写 local green）
+做完：docs/ops/th-g4-image-repro-evidence-2026-07-24.md
+必做：
+1) 检测 docker 是否在 PATH；有则 docker build -f deploy/separated/Dockerfile.frontend.vue -t new-api-frontend-vue:local . 记 exit + image id
+2) 无 docker：写 **blocked local · CI SSOT**；摘录 quality.yml job image-reproducibility 步骤名/路径；给操作员粘贴 job URL/digest 的空表
+3) 确认 Dockerfile.frontend.vue + nginx template 存在（Test-Path）
+结束：DONE + in-review；git commit；回执 th-coord；D7 NOT EXECUTED
