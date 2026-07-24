@@ -26,4 +26,4 @@ TH-CR-012 三库 → W9 已记 refund_intents 漂移
 
 ## 并行
 
-live ≤3：W11 a11y-debt-2 + 2× cr-fix。禁与关 shadow / D7 flip 并行。
+live ≤3。W11 a11y-debt-2 **DONE** @ `176027eb`（coord `f813ae38`）· CR-004/005 host-bind **DONE**。剩 **CR-003 refund** live（agent 曾 API error，已 re-nudge）。禁与关 shadow / D7 flip 并行。
