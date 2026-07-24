@@ -1,39 +1,37 @@
 # TransitHub · Long Wave · Progress
 
-> **D7 NOT EXECUTED** · 2026-07-24 · 7m patrol
+> **D7 NOT EXECUTED** · 2026-07-24 · 7m续
 
 ## Status
 
 | Field | Value |
 |-------|--------|
-| Phase | **W7–W9 harvested · W10 live · live≤3** |
+| Phase | **W10 DONE · W11 live · W12 next** |
 | G0 | D = A+C non-prod |
 | Flip | **NO** |
-| Live agents | `th-be-timeouts-redis` (+ optional room for W11) |
+| Live agents | `th-console-a11y-debt` (W11) · W10 FROZEN if PTY rm debt |
 
-## Harvest (this patrol)
+## Harvest (this 7m)
 
-| Module | Tip | Key exits / note |
-|--------|-----|------------------|
-| W7 G7 | `98ce2dfe` → coord `172c2162` | path/help **0** · smoke edge **1** · timed **n/a** · **blocked** |
-| W8 LEGACY | `98ddd6bd` → coord `5d8fcdeb` | scan only · main...HEAD web/default **empty** |
-| W9 migrate-3db | `44ab1b5e`/`de214edb` → coord | only **refund_intents** drift · three-dialect **0** |
-| W10 timeouts-redis | opening | — |
+| Module | Tip | Key |
+|--------|-----|-----|
+| W10 timeouts-redis | `f640bd5d` → coord `eb8873f4` | common/model **0** · root embed **1** · Redis helper no deadline risk |
+| W11 a11y | live | — |
 
 ## GATE
 
-G1/G5 green · G2–G4/G6–G8 blocked honest · G3 contract green · G7 dry-run only
+G1/G5 green · G2–G4/G6–G8 blocked honest · G3 contract green
 
 ## Fleet
 
 | wt | action |
 |----|--------|
 | th-coord | active |
-| th-be-timeouts-redis | **live** W10 |
-| W7/W8/W9 | **rm** this patrol |
+| th-be-timeouts-redis | **DONE · FROZEN** (rm PTY may fail) |
+| th-console-a11y-debt | **live** W11 |
 
 ## Log
 
 | Time | Event |
 |------|--------|
-| 2026-07-24 | 7m: W7/W8/W9 DONE · rm · open W10 · feature push |
+| 2026-07-24 | 7m: W10 harvest+commit+push try · open W11 · no findings fix wt |
